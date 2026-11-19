@@ -80,6 +80,47 @@ multi-step physics, dense diagrams — switch to `google/gemini-2.5-pro` or
 already use, but free requests are rate limited, which stalls bulk page
 description. Paid models have no such limit.
 
+## Deploying to Render
+
+The repo includes a `render.yaml` blueprint, so Render can create the service,
+disk and environment variables in one step: **New → Blueprint**, pick the repo,
+then paste your `NAGA_API_KEY` when prompted. Nothing secret is committed —
+`NAGA_API_KEY` uses `sync: false`, which makes Render ask for it at deploy time.
+
+There is no `.env` in production. Render injects environment variables
+directly, and `npm start` uses `--env-file-if-exists=.env`, so the same command
+works locally and on Render.
+
+### The part that matters: your notes need a disk
+
+SQLite stores notes, conversations and page images in a single file under
+`DATA_DIR`. A Render service's filesystem is **ephemeral** — wiped on every
+deploy and restart — so without a persistent disk, every note and conversation
+is lost whenever you push. Two consequences:
+
+- **Free instances cannot attach a disk at all.** The free tier is fine for
+  trying the UI, but notes vanish on redeploy and the service sleeps after 15
+  minutes of inactivity. Use `plan: starter` (or higher) for real use.
+- `DATA_DIR` must equal the disk's `mountPath`. The blueprint sets both to
+  `/var/data`. If they diverge, the app happily writes to ephemeral storage and
+  you lose data without any error.
+
+Disks bill at about $0.25/GB/month, so the 1 GB in the blueprint is a few cents.
+Render also takes daily snapshots of disks automatically.
+
+### Things to know
+
+- **Single instance only.** SQLite does not work across multiple instances, and
+  a disk can only mount to one service. Leave scaling at 1.
+- **Memory.** Rendering a PDF peaks around 155 MB RSS for an 8-page deck.
+  `starter` (512 MB) is enough; large decks with `MAX_PDF_PAGES` raised will want
+  more headroom.
+- **Node version.** `node:sqlite` needs Node 22.13+, and `package.json` says so.
+  Render's default for new services is 24.x, so this normally needs no action.
+  To pin it, add a `NODE_VERSION` env var or a `.node-version` file.
+- **Build.** `npm ci` installs `@napi-rs/canvas` from a prebuilt linux-x64
+  binary, so no compiler toolchain is needed.
+
 ## How it works
 
 ```

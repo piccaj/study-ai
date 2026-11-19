@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: study-ai
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NAGA_API_KEY
+        sync: false
+      # SQLite lives here; must match the disk mountPath below.
+      - key: DATA_DIR
+        value: /var/data
+      - key: NAGA_MODEL
+        value: google/gemini-3.8-flash
+      - key: NAGA_VISION_MODEL
+        value: google/gemini-3.8-flash
+    disk:
+      name: study-ai-data
+      mountPath: /var/data
+      sizeGB: 1

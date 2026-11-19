@@ -1,3 +1,15 @@
+/** Build a small PNG with a solid fill, for image-upload and vision tests. */
+export async function makePng(width = 40, height = 30) {
+  const { createCanvas } = await import('@napi-rs/canvas');
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#3366cc';
+  ctx.fillRect(4, 4, width - 8, height - 8);
+  return canvas.encode('png');
+}
+
 /** Build a minimal single-page PDF with one line of text, for extraction tests. */
 export function makePdf(text) {
   const stream = `BT /F1 18 Tf 72 700 Td (${text.replace(/[()\\]/g, '\\$&')}) Tj ET`;

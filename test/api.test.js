@@ -85,9 +85,22 @@ test('unsupported uploads are rejected with 415', async () => {
   const { base, close } = await startServer(app);
   try {
     const form = new FormData();
-    form.append('file', new Blob(['binary'], { type: 'image/png' }), 'picture.png');
+    form.append('file', new Blob(['binary'], { type: 'application/zip' }), 'archive.zip');
     const res = await fetch(`${base}/api/notes`, { method: 'POST', body: form });
     assert.equal(res.status, 415);
+  } finally {
+    await close();
+  }
+});
+
+test('a corrupt image is rejected without a server error', async () => {
+  const app = createApp({ db: openDatabase(':memory:'), ai: fakeAi() });
+  const { base, close } = await startServer(app);
+  try {
+    const form = new FormData();
+    form.append('file', new Blob(['not really a png'], { type: 'image/png' }), 'broken.png');
+    const res = await fetch(`${base}/api/notes`, { method: 'POST', body: form });
+    assert.equal(res.status, 422);
   } finally {
     await close();
   }
@@ -256,7 +269,7 @@ test('settings reject malformed model ids and keep valid ones', async () => {
       body: JSON.stringify({ model: 'fake/model' }),
     });
     assert.equal(good.status, 200);
-    assert.deepEqual(await good.json(), { model: 'fake/model' });
+    assert.deepEqual(await good.json(), { model: 'fake/model', visionModel: 'google/gemini-2.5-flash-lite' });
 
     const settings = await (await fetch(`${base}/api/settings`)).json();
     assert.equal(settings.model, 'fake/model');

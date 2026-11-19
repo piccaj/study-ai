@@ -29,7 +29,7 @@ export function createApp({
     res.json({ ok: true, apiKeyConfigured: ai.configured });
   });
 
-  app.use('/api/notes', notesRouter({ notes }));
+  app.use('/api/notes', notesRouter({ notes, ai, settings }));
   app.use('/api/conversations', conversationsRouter({ conversations }));
   app.use('/api/chat', chatRouter({ ai, conversations, notes, settings }));
   app.use('/api/settings', settingsRouter({ settings, ai }));

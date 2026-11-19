@@ -25,11 +25,15 @@
             <h2>Notes</h2>
             <label class="upload" title="Upload notes">
               <input type="file" id="file-input" multiple hidden
-                accept=".txt,.md,.markdown,.pdf,.docx,.csv,.json,.html,.htm" />
+                accept=".txt,.md,.markdown,.pdf,.docx,.csv,.json,.html,.htm,.png,.jpg,.jpeg,.webp" />
               <span>Upload</span>
             </label>
           </div>
-          <p class="hint">PDF, DOCX, TXT, MD, CSV, HTML</p>
+          <p class="hint">PDF, DOCX, TXT, MD, CSV, HTML, images</p>
+          <label class="vision-toggle">
+            <input type="checkbox" id="vision-toggle" checked />
+            <span>Read diagrams &amp; figures</span>
+          </label>
           <ul class="note-list" id="note-list"></ul>
         </section>
 
@@ -83,6 +87,7 @@
           <button value="cancel" class="icon" aria-label="Close">✕</button>
         </header>
         <p class="hint" id="note-meta"></p>
+        <div class="page-strip" id="note-pages" hidden></div>
         <textarea id="note-content" rows="18" spellcheck="false"></textarea>
         <footer class="dialog-foot">
           <button type="button" class="danger" id="note-delete">Delete note</button>

@@ -7,15 +7,18 @@ export const defaultDbPath = () =>
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS notes (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  filename    TEXT NOT NULL,
-  mime_type   TEXT NOT NULL,
-  size_bytes  INTEGER NOT NULL,
-  content     TEXT NOT NULL,
-  char_count  INTEGER NOT NULL,
-  created_at  TEXT NOT NULL,
-  updated_at  TEXT NOT NULL
+  id            TEXT PRIMARY KEY,
+  title         TEXT NOT NULL,
+  filename      TEXT NOT NULL,
+  mime_type     TEXT NOT NULL,
+  size_bytes    INTEGER NOT NULL,
+  content       TEXT NOT NULL,
+  char_count    INTEGER NOT NULL,
+  page_count    INTEGER NOT NULL DEFAULT 0,
+  vision_status TEXT NOT NULL DEFAULT 'none',
+  vision_model  TEXT,
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS note_chunks (
@@ -26,6 +29,17 @@ CREATE TABLE IF NOT EXISTS note_chunks (
 );
 
 CREATE INDEX IF NOT EXISTS note_chunks_note_id ON note_chunks(note_id);
+
+CREATE TABLE IF NOT EXISTS note_pages (
+  note_id     TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  idx         INTEGER NOT NULL,
+  mime_type   TEXT NOT NULL,
+  width       INTEGER,
+  height      INTEGER,
+  description TEXT,
+  image       BLOB NOT NULL,
+  PRIMARY KEY (note_id, idx)
+);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS note_chunks_fts USING fts5(
   text,
@@ -64,7 +78,21 @@ export function openDatabase(path = defaultDbPath()) {
   if (path !== ':memory:') db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA foreign_keys = ON');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/** Add columns introduced after the first release to existing databases. */
+function migrate(db) {
+  const columns = new Set(db.prepare('PRAGMA table_info(notes)').all().map((c) => c.name));
+  const additions = [
+    ['page_count', 'INTEGER NOT NULL DEFAULT 0'],
+    ['vision_status', "TEXT NOT NULL DEFAULT 'none'"],
+    ['vision_model', 'TEXT'],
+  ];
+  for (const [name, type] of additions) {
+    if (!columns.has(name)) db.exec(`ALTER TABLE notes ADD COLUMN ${name} ${type}`);
+  }
 }
 
 export const now = () => new Date().toISOString();

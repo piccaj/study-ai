@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 
 export const DEFAULT_BASE_URL = 'https://api.naga.ac/v1';
-export const DEFAULT_MODEL = 'google/gemini-2.5-flash';
+/** Cheapest NagaAI model that reads both images and PDFs natively (1M context). */
+export const DEFAULT_MODEL = 'google/gemini-2.5-flash-lite';
 
 const MODEL_ID = /^[a-z0-9][\w.-]*\/[\w.:-]+$/i;
 
@@ -30,7 +31,7 @@ export function createAiClient({
       const { data = [] } = await res.json();
       return data
         .filter(isChatModel)
-        .map((m) => ({ id: m.id, label: m.display_name || m.id }))
+        .map((m) => ({ id: m.id, label: m.display_name || m.id, vision: supportsImages(m) }))
         .sort((a, b) => a.id.localeCompare(b.id));
     },
 
@@ -44,7 +45,35 @@ export function createAiClient({
         if (delta) yield delta;
       }
     },
+
+    /** One-shot vision call used to describe a page image at upload time. */
+    async describeImage({ model, prompt, image, mime = 'image/png', signal }) {
+      const completion = await client.chat.completions.create(
+        {
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                {
+                  type: 'image_url',
+                  image_url: { url: `data:${mime};base64,${Buffer.from(image).toString('base64')}` },
+                },
+              ],
+            },
+          ],
+        },
+        { signal },
+      );
+      return completion.choices?.[0]?.message?.content?.trim() ?? '';
+    },
   };
+}
+
+function supportsImages(model) {
+  const modalities = model.architecture?.input_modalities ?? [];
+  return modalities.includes('image');
 }
 
 function isChatModel(model) {

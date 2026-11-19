@@ -29,6 +29,8 @@ const el = {
   noteMeta: document.getElementById('note-meta'),
   noteSave: document.getElementById('note-save'),
   noteDelete: document.getElementById('note-delete'),
+  notePages: document.getElementById('note-pages'),
+  visionToggle: document.getElementById('vision-toggle'),
 };
 
 async function api(path, options = {}) {
@@ -66,10 +68,11 @@ async function loadNotes() {
     li.innerHTML = `
       <div class="item-text">
         <span class="item-title"></span>
-        <span class="item-meta">${formatBytes(note.sizeBytes)} · ${note.charCount.toLocaleString()} chars</span>
+        <span class="item-meta">${formatBytes(note.sizeBytes)} · ${note.charCount.toLocaleString()} chars${visionLabel(note)}</span>
       </div>
       <button class="delete" title="Delete note">✕</button>`;
     li.querySelector('.item-title').textContent = note.title;
+    if (note.visionStatus === 'failed') li.querySelector('.item-meta').classList.add('warn');
     li.addEventListener('click', () => openNote(note.id));
     li.querySelector('.delete').addEventListener('click', async (event) => {
       event.stopPropagation();
@@ -86,9 +89,55 @@ async function openNote(id) {
   const { note } = await api(`/notes/${id}`);
   el.noteTitle.value = note.title;
   el.noteContent.value = note.content;
-  el.noteMeta.textContent = `${note.filename} · ${formatBytes(note.sizeBytes)} · ${note.charCount.toLocaleString()} characters`;
+  el.noteMeta.textContent = [
+    note.filename,
+    formatBytes(note.sizeBytes),
+    `${note.charCount.toLocaleString()} characters`,
+    note.pageCount ? `${note.pageCount} page image${note.pageCount === 1 ? '' : 's'}` : null,
+    visionText(note),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  renderPageStrip(note);
   el.noteDialog.dataset.id = id;
   el.noteDialog.showModal();
+}
+
+function renderPageStrip(note) {
+  el.notePages.innerHTML = '';
+  if (!note.pageCount) {
+    el.notePages.hidden = true;
+    return;
+  }
+  for (const page of note.pages ?? []) {
+    const figure = document.createElement('figure');
+    figure.className = 'page-thumb';
+    const img = document.createElement('img');
+    img.src = `/api/notes/${note.id}/pages/${page.idx}`;
+    img.alt = `Page ${page.idx + 1}${page.description ? `: ${page.description.slice(0, 80)}` : ''}`;
+    img.loading = 'lazy';
+    img.addEventListener('click', () => window.open(img.src, '_blank', 'noopener'));
+    figure.append(img);
+    const caption = document.createElement('figcaption');
+    caption.textContent = `Page ${page.idx + 1}`;
+    figure.append(caption);
+    el.notePages.append(figure);
+  }
+  el.notePages.hidden = false;
+}
+
+function visionText(note) {
+  if (note.visionStatus === 'done') return 'diagrams described';
+  if (note.visionStatus === 'partial') return 'some pages described';
+  if (note.visionStatus === 'failed') return 'diagram reading failed';
+  return null;
+}
+
+function visionLabel(note) {
+  if (note.visionStatus === 'done') return ` · 👁 ${note.pageCount}`;
+  if (note.visionStatus === 'partial') return ' · 👁 partial';
+  if (note.visionStatus === 'failed') return ' · 👁 failed';
+  return '';
 }
 
 el.noteSave.addEventListener('click', async () => {
@@ -116,13 +165,22 @@ el.noteDelete.addEventListener('click', async () => {
 });
 
 async function uploadFiles(files) {
+  const useVision = el.visionToggle?.checked !== false;
   for (const file of files) {
     const body = new FormData();
     body.append('file', file);
-    toast(`Uploading ${file.name}…`);
+    body.append('vision', useVision ? 'auto' : 'off');
+    toast(useVision ? `Uploading ${file.name} and reading its pages…` : `Uploading ${file.name}…`);
     try {
-      const { note } = await api('/notes', { method: 'POST', body });
-      toast(`Added "${note.title}" (${note.charCount.toLocaleString()} characters).`);
+      const { note, vision, truncated, totalPages } = await api('/notes', { method: 'POST', body });
+      const longNote = truncated ? ` Only the first ${note.pageCount} of ${totalPages} pages were read.` : '';
+      if (vision?.error) {
+        toast(`Added "${note.title}", but diagram reading failed: ${vision.error}${longNote}`, true);
+      } else if (note.visionStatus === 'done') {
+        toast(`Added "${note.title}" — ${note.pageCount} page${note.pageCount === 1 ? '' : 's'} described.${longNote}`);
+      } else {
+        toast(`Added "${note.title}" (${note.charCount.toLocaleString()} characters).${longNote}`);
+      }
     } catch (error) {
       toast(error.message, true);
     }

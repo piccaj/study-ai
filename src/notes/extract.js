@@ -1,12 +1,31 @@
 import { extname } from 'node:path';
 import { normalize } from './chunk.js';
 
-export const SUPPORTED_EXTENSIONS = ['.txt', '.md', '.markdown', '.pdf', '.docx', '.csv', '.json', '.html', '.htm'];
+export const SUPPORTED_EXTENSIONS = [
+  '.txt',
+  '.md',
+  '.markdown',
+  '.pdf',
+  '.docx',
+  '.csv',
+  '.json',
+  '.html',
+  '.htm',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+];
 
 const TEXT_EXTENSIONS = new Set(['.txt', '.md', '.markdown', '.csv', '.json', '.html', '.htm']);
+const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 
 export function isSupported(filename) {
   return SUPPORTED_EXTENSIONS.includes(extname(filename).toLowerCase());
+}
+
+export function isImage(filename) {
+  return IMAGE_EXTENSIONS.has(extname(filename).toLowerCase());
 }
 
 /**
@@ -26,6 +45,9 @@ export async function extractText({ buffer, filename, mimetype }) {
 
   if (ext === '.pdf') return normalize(await extractPdf(buffer));
   if (ext === '.docx') return normalize(await extractDocx(buffer));
+
+  // Images carry no text layer; their content arrives from the vision pass.
+  if (IMAGE_EXTENSIONS.has(ext)) return '';
 
   throw new UnsupportedFileError(`Unsupported file type: ${ext}`);
 }

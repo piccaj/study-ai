@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractText, isSupported, UnsupportedFileError } from '../src/notes/extract.js';
+import { extractText, isImage, isSupported, UnsupportedFileError } from '../src/notes/extract.js';
 import { makePdf, makeDocx } from './helpers/files.js';
 
 test('supported extensions are recognised', () => {
@@ -44,7 +44,17 @@ test('docx text is extracted', async () => {
 
 test('unsupported types throw UnsupportedFileError', async () => {
   await assert.rejects(
-    extractText({ buffer: Buffer.from('x'), filename: 'a.png', mimetype: 'image/png' }),
+    extractText({ buffer: Buffer.from('x'), filename: 'a.zip', mimetype: 'application/zip' }),
     UnsupportedFileError,
   );
+});
+
+test('images are supported and carry no text layer', async () => {
+  assert.equal(isSupported('diagram.png'), true);
+  assert.equal(isSupported('scan.JPG'), true);
+  assert.equal(isImage('diagram.png'), true);
+  assert.equal(isImage('notes.txt'), false);
+
+  const text = await extractText({ buffer: Buffer.from('binary'), filename: 'diagram.png', mimetype: 'image/png' });
+  assert.equal(text, '');
 });

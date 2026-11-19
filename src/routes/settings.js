@@ -1,5 +1,6 @@
 import express from 'express';
 import { DEFAULT_MODEL, isModelId } from '../ai/client.js';
+import { DEFAULT_VISION_MODEL } from '../notes/vision.js';
 
 export function settingsRouter({ settings, ai }) {
   const router = express.Router();
@@ -7,21 +8,33 @@ export function settingsRouter({ settings, ai }) {
   router.get('/', (req, res) => {
     res.json({
       model: settings.get('model', process.env.NAGA_MODEL || DEFAULT_MODEL),
+      visionModel: settings.get('visionModel', process.env.NAGA_VISION_MODEL || DEFAULT_VISION_MODEL),
       apiKeyConfigured: ai.configured,
       baseUrl: process.env.NAGA_BASE_URL || 'https://api.naga.ac/v1',
     });
   });
 
   router.put('/', async (req, res) => {
-    const model = typeof req.body?.model === 'string' ? req.body.model.trim() : '';
-    if (!isModelId(model)) {
-      return res.status(400).json({ error: 'model must look like "vendor/model-name".' });
+    const updates = {};
+    for (const key of ['model', 'visionModel']) {
+      if (req.body?.[key] === undefined) continue;
+      const value = typeof req.body[key] === 'string' ? req.body[key].trim() : '';
+      if (!isModelId(value)) {
+        return res.status(400).json({ error: `${key} must look like "vendor/model-name".` });
+      }
+      if (!(await knownModel(value))) {
+        return res.status(400).json({ error: `"${value}" is not in the NagaAI model catalog.` });
+      }
+      updates[key] = value;
     }
-    if (!(await knownModel(model))) {
-      return res.status(400).json({ error: `"${model}" is not in the NagaAI model catalog.` });
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ error: 'Provide a model or visionModel to update.' });
     }
-    settings.set('model', model);
-    res.json({ model: settings.get('model') });
+    for (const [key, value] of Object.entries(updates)) settings.set(key, value);
+    res.json({
+      model: settings.get('model', process.env.NAGA_MODEL || DEFAULT_MODEL),
+      visionModel: settings.get('visionModel', process.env.NAGA_VISION_MODEL || DEFAULT_VISION_MODEL),
+    });
   });
 
   /**

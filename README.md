@@ -121,6 +121,58 @@ Render also takes daily snapshots of disks automatically.
 - **Build.** `npm ci` installs `@napi-rs/canvas` from a prebuilt linux-x64
   binary, so no compiler toolchain is needed.
 
+## Deploying to Wispbyte
+
+Wispbyte is a Pterodactyl-style Docker panel rather than a PaaS. That trade is
+good for this app: the free plan gives you a **real filesystem that survives
+restarts**, which is exactly what the SQLite database needs — and what Render's
+free tier refuses to provide.
+
+Free servers get **512 MB RAM**. Peak RSS rendering a 20-page PDF measures
+about 170 MB, so the free plan fits, with room for a few concurrent chats.
+
+### Setup
+
+1. **Create → Custom Setup → Free plan**, and pick the **Node.js** image.
+2. Upload the repo, or use **GitHub Integration** to pull it.
+3. On **Startup**, set the command:
+
+   ```
+   npm install && node src/server.js
+   ```
+
+   A custom startup command replaces the image's default, so `JS_FILE`
+   no longer applies.
+4. Add environment variables:
+
+   | Variable       | Value                                   |
+   | -------------- | --------------------------------------- |
+   | `NAGA_API_KEY` | your key from https://naga.ac/dashboard |
+   | `DATA_DIR`     | `/home/container/data`                  |
+
+   `SERVER_PORT` is supplied by the panel. The app reads it automatically, and
+   also accepts `PORT` when you run it anywhere else.
+5. Start the server, then copy the port from **Address** in the Console (the
+   number after `:`) into your browser.
+
+### Things to know
+
+- **Node version is the one real risk.** `node:sqlite` requires **Node 22.13+**;
+  older versions fail at boot with `No such built-in module: node:sqlite`.
+  Wispbyte does not publish which Node version its image ships. Check the
+  Console on first start. If it reports Node 20 or 22.12, the image is too old
+  and no environment variable will fix it — ask support for a newer Node image.
+- **Keep the server awake.** Free servers stop after 2 weeks without a panel
+  login. After 30 days your files move to cold storage (never deleted) and come
+  back via **Restore files**.
+- **CPU is capped at ~15% average.** Bulk-processing a large PDF library in one
+  go can trip the automatic stop. Upload in small batches.
+- **One account per person.** Extra free accounts to get more servers breaks
+  their fair-use policy.
+- **Public by default.** Anything you can reach on the port, anyone else can
+  too. There is no login screen, so treat the URL as private and don't upload
+  notes you would not want public.
+
 ## How it works
 
 ```

@@ -32,6 +32,12 @@ Study AI: Express + `node:sqlite` backend, dependency-free frontend, NagaAI chat
 - The browser automation tool duplicates typed text in the model input; the UI
   rejects it by design, so verify model changes via `curl` instead.
 - `DATA_DIR` defaults to `./data`; delete it to reset notes and sessions.
+- The port comes from `PORT`, then `SERVER_PORT`, then 12000. Pterodactyl-style
+  panels (Wispbyte) allocate a fixed port and expose it as `SERVER_PORT`, and
+  their startup command must bind it explicitly — there is no `PORT` injection.
+- Hosting needs a persistent filesystem for `DATA_DIR`. Render's free tier has
+  none (disks are paid); Wispbyte's free tier does. `node:sqlite` needs Node
+  22.13+ — older images die at boot with `No such built-in module: node:sqlite`.
 - Vision descriptions are appended to `notes.content` as
   `[Page N — visual description]` blocks. `appendPageDescriptions` strips existing
   blocks first, so re-running vision replaces rather than duplicates them — keep

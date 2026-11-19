@@ -52,7 +52,8 @@ export function createApp({
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const port = Number(process.env.PORT ?? 12000);
+  // Pterodactyl-style panels expose the allocated port as SERVER_PORT.
+  const port = Number(process.env.PORT ?? process.env.SERVER_PORT ?? 12000);
   const app = createApp();
   app.listen(port, () => {
     console.log(`Study AI listening on http://localhost:${port}`);

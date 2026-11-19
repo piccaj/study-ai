@@ -24,10 +24,19 @@ Study AI: Express + `node:sqlite` backend, dependency-free frontend, NagaAI chat
 - Model ids must match `vendor/name` and exist in the live NagaAI catalog
   (`/api/settings/models`, cached 10 min). Stub AI clients in tests must return
   `fake/model` so settings PUT passes.
-- Defaults are `google/gemini-3.8-flash` for both chat and vision. The catalog
-  is public, so `curl https://api.naga.ac/v1/models` verifies an id without a
-  key — but note `/v1/chat/completions` checks auth *before* model validation,
-  so a 401 proves nothing about whether an id exists. Check the catalog instead.
+- Default chat model is `google/gemini-3.5-flash-lite`, chosen for latency;
+  vision defaults to `google/gemini-3.8-flash`. The catalog is public, so
+  `curl https://api.naga.ac/v1/models` verifies an id without a key — but note
+  `/v1/chat/completions` checks auth *before* model validation, so a 401 proves
+  nothing about whether an id exists. Check the catalog instead.
+- Latency is almost entirely NagaAI time-to-first-token, not this app: `/api/chat`
+  emits `meta` in ~0.3s and then waits on upstream. Measured on a live box,
+  `gemini-3.8-flash` needs 4-11s to first token while `gemini-3.5-flash-lite`
+  needs ~1.5s for the same output. Before optimising anything else, benchmark the
+  model — and repeat each run, since variance is large and some ids return 503.
+- A saved `model` row in `settings` overrides `DEFAULT_MODEL`, so changing the
+  default in code does nothing on an existing database. `PUT /api/settings` with
+  `{"model": "..."}` switches it live without a redeploy.
 - NagaAI publishes no benchmark scores; model choice is lineage and price only.
 - The browser automation tool duplicates typed text in the model input; the UI
   rejects it by design, so verify model changes via `curl` instead.

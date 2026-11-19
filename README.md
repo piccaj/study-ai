@@ -20,7 +20,7 @@ from the [NagaAI](https://naga.ac) OpenAI-compatible API.
 - **Note editor** — open any note to read or correct the extracted text; edits are
   re-indexed immediately.
 - **Any NagaAI model** — pick from the live catalog (700+ chat models) in the
-  sidebar, or keep the default `google/gemini-3.8-flash`.
+  sidebar, or keep the default `google/gemini-3.5-flash-lite`.
 - **Page previews** — open a note to see the rendered page images next to the
   text that was extracted from them.
 
@@ -41,7 +41,7 @@ still runs — you can upload and edit notes, but chat returns HTTP 503.
 | --- | --- | --- |
 | `NAGA_API_KEY` | – | NagaAI key (required for chat) |
 | `NAGA_BASE_URL` | `https://api.naga.ac/v1` | OpenAI-compatible endpoint |
-| `NAGA_MODEL` | `google/gemini-3.8-flash` | Default chat model |
+| `NAGA_MODEL` | `google/gemini-3.5-flash-lite` | Default chat model |
 | `NAGA_VISION_MODEL` | `google/gemini-3.8-flash` | Model that describes page images |
 | `PORT` | `12000` | HTTP port |
 | `DATA_DIR` | `./data` | SQLite location |
@@ -54,9 +54,11 @@ in the database.
 
 ### Choosing a model
 
-The default is `google/gemini-3.8-flash`, which NagaAI describes as "Google's
-most intelligent Flash model", with 1M-token context and text, image and PDF
-input. A typical study answer costs well under a cent.
+The default is `google/gemini-3.5-flash-lite`, chosen for latency: the full
+Flash models spend 4-10s before the first token on NagaAI, which makes short
+questions feel broken. Flash-Lite answers in about 1.5s with comparable study
+answers, and costs a fraction as much. Switch to `google/gemini-3.8-flash` in
+Settings when you want the strongest model and can wait.
 
 NagaAI publishes no benchmark scores, so these are lineage and price tiers
 rather than measured rankings:
@@ -65,7 +67,8 @@ rather than measured rankings:
 | --- | --- | --- | --- |
 | `google/gemini-2.5-flash` | 0.075 | 0.625 | What the free Gemini web app runs; cheapest sane baseline |
 | `google/gemini-2.5-flash-lite` | 0.025 | 0.10 | Cheapest capable model; noticeably weaker at diagrams |
-| **`google/gemini-3.8-flash`** | **0.188** | **0.938** | **Default** — newest Flash, best quality per dollar |
+| **`google/gemini-3.5-flash-lite`** | **0.02** | **0.08** | **Default** — fastest to first token (~1.5s) |
+| `google/gemini-3.8-flash` | 0.188 | 0.938 | Strongest Flash, but 4-10s before the first token |
 | `google/gemini-2.5-pro` | 0.312 | 2.50 | Pro-tier reasoning, generally available |
 | `google/gemini-4-hydrogen` | 0.375 | 1.88 | Gemini 4 workhorse, adjustable `reasoning_effort` |
 | `google/gemini-3.1-pro-preview` | 0.50 | 3.00 | Pro-tier, preview only |

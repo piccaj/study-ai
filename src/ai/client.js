@@ -2,12 +2,12 @@ import OpenAI from 'openai';
 
 export const DEFAULT_BASE_URL = 'https://api.naga.ac/v1';
 /**
- * Newest Flash-tier Gemini on NagaAI: "Google's most intelligent Flash model",
- * 1M context, reads text, images and PDFs. Roughly $0.001 per study answer.
- * Swap to google/gemini-2.5-pro or google/gemini-3.1-pro-preview for harder
- * reasoning at ~4x the price.
+ * Flash-Lite tier: the full Flash models spend 4-10s before the first token on
+ * NagaAI, which reads as a hung UI for short questions. This answers in ~1.5s
+ * with comparable study answers. Swap to google/gemini-3.8-flash in Settings
+ * when you want the strongest model and do not mind the wait.
  */
-export const DEFAULT_MODEL = 'google/gemini-3.8-flash';
+export const DEFAULT_MODEL = 'google/gemini-3.5-flash-lite';
 
 const MODEL_ID = /^[a-z0-9][\w.-]*\/[\w.:-]+$/i;
 

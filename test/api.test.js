@@ -320,3 +320,36 @@ test('patching a note updates title and content together', async () => {
     await close();
   }
 });
+
+test('streaming is not aborted while the client is still reading', async () => {
+  const signals = [];
+  const ai = {
+    configured: true,
+    async listChatModels() {
+      return [{ id: 'fake/model', label: 'Fake Model' }];
+    },
+    async *streamChat({ signal }) {
+      signals.push(signal);
+      for (const word of ['Alpha ', 'Beta ', 'Gamma']) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        assert.equal(signal.aborted, false, 'stream was aborted mid-answer');
+        yield word;
+      }
+    },
+  };
+  const app = createApp({ db: openDatabase(':memory:'), ai });
+  const { base, close } = await startServer(app);
+  try {
+    const res = await fetch(`${base}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Say the Greek letters' }),
+    });
+    const events = parseSse(await res.text());
+    assert.equal(events.at(-1).event, 'done');
+    assert.equal(events.at(-1).data.message.content, 'Alpha Beta Gamma');
+    assert.equal(signals[0].aborted, false);
+  } finally {
+    await close();
+  }
+});

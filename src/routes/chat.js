@@ -52,7 +52,9 @@ export function chatRouter({ ai, conversations, notes, settings }) {
       });
 
       const controller = new AbortController();
-      req.on('close', () => controller.abort());
+      res.on('close', () => {
+        if (!res.writableEnded) controller.abort();
+      });
 
       let answer = '';
       for await (const delta of ai.streamChat({ model, messages, signal: controller.signal })) {

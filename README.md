@@ -83,6 +83,6 @@ carries the conversation id, title, and the notes that were used.
 npm test
 ```
 
-39 tests cover chunking, PDF/DOCX extraction, the notes and conversations repos,
+40 tests cover chunking, PDF/DOCX extraction, the notes and conversations repos,
 prompt building, Markdown rendering, and the HTTP API (including streaming chat
-against a fake AI client). No network or API key is needed.
+against a fake AI client, and that an in-flight stream is never aborted early). No network or API key is needed.

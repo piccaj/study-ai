@@ -13,6 +13,18 @@ import { settingsRouter } from './routes/settings.js';
 
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 
+// `node src/server.js` does not read .env the way `npm start` does, and Node's
+// --env-file resolves against the cwd, which panels do not always set to the app
+// root. Load it from the app directory so both invocations behave the same;
+// real environment variables still take precedence.
+if (!process.env.NAGA_API_KEY && typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile(join(publicDir, '..', '.env'));
+  } catch {
+    // No .env is normal on hosts that inject environment variables.
+  }
+}
+
 export function createApp({
   db = openDatabase(),
   ai = createAiClient(),

@@ -5,6 +5,3 @@ data/
 !.env.example
 *.log
 .DS_Store
-
-# Node downloaded by scripts/start.py on Python-only hosts
-.runtime/

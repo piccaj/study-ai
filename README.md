@@ -131,55 +131,35 @@ free tier refuses to provide.
 Free servers get **512 MB RAM**. Peak RSS rendering a 20-page PDF measures
 about 170 MB, so the free plan fits, with room for a few concurrent chats.
 
-### A Python server works, even though this is a Node app
-
-Panels pin the Docker image at creation, and it cannot be switched afterwards.
-If yours is a **Python** image there is no `node` binary, so
-`scripts/start.py` bootstraps one: it downloads a pinned Node release into the
-server's own directory (no root, no image change), verifies it against Node's
-published SHA-256, then installs dependencies and starts the app.
-
-Node is cached in `NODE_HOME`, so the 30 MB download happens once per container
-rather than on every restart. Set `NODE_HOME` to a path **outside the repo** —
-`/home/container/node` is right for a panel — so redeploys don't wipe it.
-Pruning build-only headers and docs brings the install to about 141 MB.
-
 ### Setup
 
-1. On **Startup**, set the command:
-
-   ```
-   python3 scripts/start.py
-   ```
-
-2. Add environment variables:
+1. **Create → Custom Setup → Free plan**, and pick the **Node.js** image. If the
+   server already exists with another image, switch it under **Settings →
+   Docker Image** and reinstall.
+2. Upload the repo, or connect **GitHub Integration** so the panel pulls on
+   start.
+3. On **Startup**, set `JS_FILE` to `src/server.js`. The panel's startup script
+   already runs `npm install` and then `node $JS_FILE`, so no custom command is
+   needed — leave the startup command at its default.
+4. Add environment variables:
 
    | Variable       | Value                                   |
    | -------------- | --------------------------------------- |
    | `NAGA_API_KEY` | your key from https://naga.ac/dashboard |
    | `DATA_DIR`     | `/home/container/data`                  |
-   | `NODE_HOME`    | `/home/container/node`                  |
 
-   `SERVER_PORT` is supplied by the panel and picked up automatically. `PORT`
-   works too, when you run the app anywhere else.
-
-3. Start the server, then copy the port from **Address** in the Console (the
+   `SERVER_PORT` is supplied by the panel. The app reads it automatically, and
+   also accepts `PORT` when you run it anywhere else.
+5. Start the server, then copy the port from **Address** in the Console (the
    number after `:`) into your browser.
-
-The first boot takes a minute or two while Node downloads. Later boots skip
-straight to `npm ci` and start in seconds.
 
 ### Things to know
 
-- **`python3` must exist in the image.** If the console says `python3: command
-  not found`, try `python scripts/start.py`.
-- **No `pip install` needed.** The launcher is pure stdlib, so there is no
-  `requirements.txt` to install. It falls back to Node's `.tar.gz` when the
-  image's Python was built without `lzma` (common in slim images).
-- **Offline or blocked nodejs.org?** Point `NODE_DIST_URL` at a mirror, e.g.
-  `https://npmmirror.com/mirrors/node`. You can also upload a Node tarball
-  yourself: extract it into `NODE_HOME` and it will land at
-  `NODE_HOME/node-v<version>-linux-<arch>`, which is where the script looks.
+- **Node version is the one real risk.** `node:sqlite` requires **Node 22.13+**;
+  older versions fail at boot with `No such built-in module: node:sqlite`.
+  Wispbyte does not publish which Node version its image ships. Check the
+  Console on first start. If it reports Node 20 or 22.12, the image is too old
+  and no environment variable will fix it — ask support for a newer Node image.
 - **Keep the server awake.** Free servers stop after 2 weeks without a panel
   login. After 30 days your files move to cold storage (never deleted) and come
   back via **Restore files**.

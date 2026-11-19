@@ -173,8 +173,9 @@ straight to `npm ci` and start in seconds.
 
 - **`python3` must exist in the image.** If the console says `python3: command
   not found`, try `python scripts/start.py`.
-- **Python 3.8+ is enough.** The script sticks to syntax and stdlib APIs that
-  old panel images have.
+- **No `pip install` needed.** The launcher is pure stdlib, so there is no
+  `requirements.txt` to install. It falls back to Node's `.tar.gz` when the
+  image's Python was built without `lzma` (common in slim images).
 - **Offline or blocked nodejs.org?** Point `NODE_DIST_URL` at a mirror, e.g.
   `https://npmmirror.com/mirrors/node`. You can also upload a Node tarball
   yourself: extract it into `NODE_HOME` and it will land at

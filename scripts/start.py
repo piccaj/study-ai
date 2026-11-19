@@ -67,9 +67,19 @@ def published_sha256(name: str) -> Optional[str]:
     return None
 
 
+def has_lzma() -> bool:
+    """Slim Python images are often built without liblzma, so .tar.xz fails."""
+    try:
+        import lzma  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def download(target: Path) -> None:
     arch = machine()
-    name = f"node-v{NODE_VERSION}-linux-{arch}.tar.xz"
+    ext = "tar.xz" if has_lzma() else "tar.gz"
+    name = f"node-v{NODE_VERSION}-linux-{arch}.{ext}"
     url = f"{NODE_DIST}/v{NODE_VERSION}/{name}"
     archive = target.parent / f"{name}.part"
 
@@ -77,13 +87,16 @@ def download(target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
     with urllib.request.urlopen(url, timeout=180) as response, open(archive, "wb") as out:
-        while chunk := response.read(1 << 20):
+        while True:
+            chunk = response.read(1 << 20)
+            if not chunk:
+                break
             digest.update(chunk)
             out.write(chunk)
 
-    # The tarball runs on every start, so a corrupted or tampered download must
-    # not be unpacked and executed. Node publishes the digests next to the
-    # archive, which keeps NODE_VERSION overrides working.
+    # The tarball is executed, so a corrupted or tampered download must not be
+    # unpacked. Node publishes the digests next to the archive, which keeps
+    # NODE_VERSION overrides working.
     expected = published_sha256(name)
     if expected is None:
         archive.unlink(missing_ok=True)
@@ -92,7 +105,7 @@ def download(target: Path) -> None:
         archive.unlink(missing_ok=True)
         sys.exit(f"Checksum mismatch for {name}; refusing to install it.")
 
-    with tarfile.open(archive, "r:xz") as tar:
+    with tarfile.open(archive, "r:*") as tar:
         # `filter` only exists on Python 3.12+; the older signature is safe here
         # because the archive is checksum-verified and comes from nodejs.org.
         try:

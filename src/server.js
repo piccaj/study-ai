@@ -1,0 +1,61 @@
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { openDatabase } from './db.js';
+import { createNotesRepo } from './notes/repo.js';
+import { createConversationsRepo } from './conversations/repo.js';
+import { createSettingsRepo } from './settings/repo.js';
+import { createAiClient } from './ai/client.js';
+import { notesRouter } from './routes/notes.js';
+import { conversationsRouter } from './routes/conversations.js';
+import { chatRouter } from './routes/chat.js';
+import { settingsRouter } from './routes/settings.js';
+
+const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
+
+export function createApp({
+  db = openDatabase(),
+  ai = createAiClient(),
+} = {}) {
+  const notes = createNotesRepo(db);
+  const conversations = createConversationsRepo(db);
+  const settings = createSettingsRepo(db);
+
+  const app = express();
+  app.locals.db = db;
+  app.use(express.json({ limit: '1mb' }));
+
+  app.get('/api/health', (req, res) => {
+    res.json({ ok: true, apiKeyConfigured: ai.configured });
+  });
+
+  app.use('/api/notes', notesRouter({ notes }));
+  app.use('/api/conversations', conversationsRouter({ conversations }));
+  app.use('/api/chat', chatRouter({ ai, conversations, notes, settings }));
+  app.use('/api/settings', settingsRouter({ settings, ai }));
+
+  app.use(express.static(publicDir));
+
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found.' });
+    next();
+  });
+
+  app.use((error, req, res, next) => {
+    console.error(error);
+    if (res.headersSent) return next(error);
+    const status = error.status ?? error.statusCode ?? 500;
+    res.status(status).json({ error: status === 500 ? 'Something went wrong.' : error.message });
+  });
+
+  return app;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const port = Number(process.env.PORT ?? 12000);
+  const app = createApp();
+  app.listen(port, () => {
+    console.log(`Study AI listening on http://localhost:${port}`);
+    if (!process.env.NAGA_API_KEY) console.warn('NAGA_API_KEY is not set — chat will return 503 until it is.');
+  });
+}

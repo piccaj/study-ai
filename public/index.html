@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Study AI</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <header class="brand">
+          <span class="brand-mark">📚</span>
+          <div>
+            <h1>Study AI</h1>
+            <p>Powered by NagaAI</p>
+          </div>
+        </header>
+
+        <button class="primary" id="new-chat">+ New session</button>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Notes</h2>
+            <label class="upload" title="Upload notes">
+              <input type="file" id="file-input" multiple hidden
+                accept=".txt,.md,.markdown,.pdf,.docx,.csv,.json,.html,.htm" />
+              <span>Upload</span>
+            </label>
+          </div>
+          <p class="hint">PDF, DOCX, TXT, MD, CSV, HTML</p>
+          <ul class="note-list" id="note-list"></ul>
+        </section>
+
+        <section class="panel grow">
+          <div class="panel-head">
+            <h2>Sessions</h2>
+          </div>
+          <ul class="conversation-list" id="conversation-list"></ul>
+        </section>
+
+        <footer class="settings">
+          <label for="model-input">Model</label>
+          <input id="model-input" list="model-options" autocomplete="off" spellcheck="false"
+                 placeholder="Search models…" />
+          <datalist id="model-options"></datalist>
+          <p class="hint" id="key-status"></p>
+        </footer>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button class="icon" id="toggle-sidebar" aria-label="Toggle sidebar">☰</button>
+          <h2 id="conversation-title">New study session</h2>
+        </header>
+
+        <div class="messages" id="messages">
+          <div class="empty" id="empty-state">
+            <h2>Learn faster with your own notes</h2>
+            <p>Upload lecture notes, slides or a textbook chapter, then ask anything about them.</p>
+            <div class="suggestions">
+              <button data-prompt="Summarize my notes into a one-page study guide.">Summarize my notes</button>
+              <button data-prompt="Quiz me with 5 questions from my notes, then grade my answers.">Quiz me</button>
+              <button data-prompt="Explain the hardest ideas in my notes like I'm new to the topic.">Explain the hard parts</button>
+            </div>
+          </div>
+        </div>
+
+        <form class="composer" id="composer">
+          <textarea id="input" rows="1" placeholder="Ask about your notes… (Enter to send, Shift+Enter for newline)"></textarea>
+          <button type="submit" class="primary" id="send">Send</button>
+        </form>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="note-dialog" class="dialog">
+      <form method="dialog" class="dialog-body">
+        <header class="dialog-head">
+          <input id="note-title" class="note-title-input" aria-label="Note title" />
+          <button value="cancel" class="icon" aria-label="Close">✕</button>
+        </header>
+        <p class="hint" id="note-meta"></p>
+        <textarea id="note-content" rows="18" spellcheck="false"></textarea>
+        <footer class="dialog-foot">
+          <button type="button" class="danger" id="note-delete">Delete note</button>
+          <button type="button" class="primary" id="note-save">Save changes</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

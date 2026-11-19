@@ -1,0 +1,22 @@
+{
+  "name": "study-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Upload your notes, ask questions, and get tutored by an AI powered by the NagaAI API.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "mammoth": "^1.13.0",
+    "multer": "^2.5.0",
+    "openai": "^7.60.0",
+    "pdfjs-dist": "^6.5.438"
+  }
+}

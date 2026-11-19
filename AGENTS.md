@@ -5,7 +5,7 @@ Study AI: Express + `node:sqlite` backend, dependency-free frontend, NagaAI chat
 ## Commands
 
 - `npm start` — server on `PORT` (default 12000), needs `.env` for `NAGA_API_KEY`
-- `npm test` — 52 tests, no network or API key required
+- `npm test` — 55 tests, no network or API key required
 - `node --test test/api.test.js` — single file
 
 ## Layout
@@ -24,6 +24,11 @@ Study AI: Express + `node:sqlite` backend, dependency-free frontend, NagaAI chat
 - Model ids must match `vendor/name` and exist in the live NagaAI catalog
   (`/api/settings/models`, cached 10 min). Stub AI clients in tests must return
   `fake/model` so settings PUT passes.
+- Defaults are `google/gemini-3.8-flash` for both chat and vision. The catalog
+  is public, so `curl https://api.naga.ac/v1/models` verifies an id without a
+  key — but note `/v1/chat/completions` checks auth *before* model validation,
+  so a 401 proves nothing about whether an id exists. Check the catalog instead.
+- NagaAI publishes no benchmark scores; model choice is lineage and price only.
 - The browser automation tool duplicates typed text in the model input; the UI
   rejects it by design, so verify model changes via `curl` instead.
 - `DATA_DIR` defaults to `./data`; delete it to reset notes and sessions.

@@ -257,3 +257,10 @@ test('applyVision with no descriptions leaves the note unchanged', async () => {
   assert.equal(after.content, before.content);
   assert.equal(after.visionStatus, 'none');
 });
+
+test('default models are well-formed NagaAI ids present in the live catalog shape', async () => {
+  const { isModelId } = await import('../src/ai/client.js');
+  const { DEFAULT_MODEL } = await import('../src/ai/client.js');
+  assert.ok(isModelId(DEFAULT_MODEL), `DEFAULT_MODEL is not a model id: ${DEFAULT_MODEL}`);
+  assert.ok(isModelId(DEFAULT_VISION_MODEL), `DEFAULT_VISION_MODEL is not a model id: ${DEFAULT_VISION_MODEL}`);
+});

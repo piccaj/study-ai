@@ -20,7 +20,7 @@ from the [NagaAI](https://naga.ac) OpenAI-compatible API.
 - **Note editor** — open any note to read or correct the extracted text; edits are
   re-indexed immediately.
 - **Any NagaAI model** — pick from the live catalog (700+ chat models) in the
-  sidebar, or keep the default `google/gemini-2.5-flash-lite`.
+  sidebar, or keep the default `google/gemini-3.8-flash`.
 - **Page previews** — open a note to see the rendered page images next to the
   text that was extracted from them.
 
@@ -41,8 +41,8 @@ still runs — you can upload and edit notes, but chat returns HTTP 503.
 | --- | --- | --- |
 | `NAGA_API_KEY` | – | NagaAI key (required for chat) |
 | `NAGA_BASE_URL` | `https://api.naga.ac/v1` | OpenAI-compatible endpoint |
-| `NAGA_MODEL` | `google/gemini-2.5-flash-lite` | Default chat model |
-| `NAGA_VISION_MODEL` | `google/gemini-2.5-flash-lite` | Model that describes page images |
+| `NAGA_MODEL` | `google/gemini-3.8-flash` | Default chat model |
+| `NAGA_VISION_MODEL` | `google/gemini-3.8-flash` | Model that describes page images |
 | `PORT` | `12000` | HTTP port |
 | `DATA_DIR` | `./data` | SQLite location |
 | `MAX_UPLOAD_MB` | `25` | Upload size limit |
@@ -54,22 +54,31 @@ in the database.
 
 ### Choosing a model
 
-`google/gemini-2.5-flash-lite` is the default because it is the cheapest NagaAI
-model that reads images and PDFs natively (about $0.025 per 1M input tokens and
-$0.10 per 1M output tokens, 1M-token context). Some alternatives, at NagaAI's
-listed rates:
+The default is `google/gemini-3.8-flash`, which NagaAI describes as "Google's
+most intelligent Flash model", with 1M-token context and text, image and PDF
+input. A typical study answer costs well under a cent.
+
+NagaAI publishes no benchmark scores, so these are lineage and price tiers
+rather than measured rankings:
 
 | Model | $/1M in | $/1M out | Notes |
 | --- | --- | --- | --- |
-| `google/gemini-2.5-flash-lite` | 0.025 | 0.10 | Default; text + image + PDF + audio in |
-| `nex-agi/nex-n2.5-mini` | 0.0125 | 0.05 | Cheapest paid; text + image |
-| `qwen/qwen3.7-flash` | 0.015 | 0.065 | Text + image, 1M context |
-| `z-ai/glm-5.3-flash` | 0.0325 | 0.09 | Multimodal, 1M context |
-| `google/gemini-2.5-flash` | 0.075 | 0.625 | Stronger reasoning, ~6x the cost |
+| `google/gemini-2.5-flash` | 0.075 | 0.625 | What the free Gemini web app runs; cheapest sane baseline |
+| `google/gemini-2.5-flash-lite` | 0.025 | 0.10 | Cheapest capable model; noticeably weaker at diagrams |
+| **`google/gemini-3.8-flash`** | **0.188** | **0.938** | **Default** — newest Flash, best quality per dollar |
+| `google/gemini-2.5-pro` | 0.312 | 2.50 | Pro-tier reasoning, generally available |
+| `google/gemini-4-hydrogen` | 0.375 | 1.88 | Gemini 4 workhorse, adjustable `reasoning_effort` |
+| `google/gemini-3.1-pro-preview` | 0.50 | 3.00 | Pro-tier, preview only |
+| `anthropic/claude-sonnet-5.5` | 1.00 | 5.00 | Strong at careful explanation, ~5x the cost |
 
-Free `:free` variants exist (for example `google/gemini-2.5-flash:free`) but the
-free tier is rate limited to 10 requests/minute and 100/day, which is too tight
-for bulk page descriptions. Paid credits do not expire and have no hard limits.
+If you already pay for a Gemini subscription and want to replicate that quality,
+`google/gemini-2.5-flash` is the closest match. For harder coursework — proofs,
+multi-step physics, dense diagrams — switch to `google/gemini-2.5-pro` or
+`google/gemini-4-hydrogen` from the sidebar; the choice is saved per session.
+
+`google/gemini-2.5-flash:free` is in the catalog and matches the free Gemini you
+already use, but free requests are rate limited, which stalls bulk page
+description. Paid models have no such limit.
 
 ## How it works
 

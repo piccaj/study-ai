@@ -1,4 +1,9 @@
-export const DEFAULT_VISION_MODEL = 'google/gemini-2.5-flash-lite';
+/**
+ * Same model as chat: page descriptions become searchable text, so a weak
+ * describer degrades every answer about diagrams. Override with
+ * `NAGA_VISION_MODEL` or `PUT /api/settings` to trade cost for fidelity.
+ */
+export const DEFAULT_VISION_MODEL = 'google/gemini-3.8-flash';
 
 const PROMPT = `You are reading one page of a student's study material. Describe everything a blind reader would miss, so the description can be searched and used to answer questions later.
 

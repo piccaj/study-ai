@@ -269,7 +269,7 @@ test('settings reject malformed model ids and keep valid ones', async () => {
       body: JSON.stringify({ model: 'fake/model' }),
     });
     assert.equal(good.status, 200);
-    assert.deepEqual(await good.json(), { model: 'fake/model', visionModel: 'google/gemini-2.5-flash-lite' });
+    assert.deepEqual(await good.json(), { model: 'fake/model', visionModel: 'google/gemini-3.8-flash' });
 
     const settings = await (await fetch(`${base}/api/settings`)).json();
     assert.equal(settings.model, 'fake/model');

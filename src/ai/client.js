@@ -1,8 +1,13 @@
 import OpenAI from 'openai';
 
 export const DEFAULT_BASE_URL = 'https://api.naga.ac/v1';
-/** Cheapest NagaAI model that reads both images and PDFs natively (1M context). */
-export const DEFAULT_MODEL = 'google/gemini-2.5-flash-lite';
+/**
+ * Newest Flash-tier Gemini on NagaAI: "Google's most intelligent Flash model",
+ * 1M context, reads text, images and PDFs. Roughly $0.001 per study answer.
+ * Swap to google/gemini-2.5-pro or google/gemini-3.1-pro-preview for harder
+ * reasoning at ~4x the price.
+ */
+export const DEFAULT_MODEL = 'google/gemini-3.8-flash';
 
 const MODEL_ID = /^[a-z0-9][\w.-]*\/[\w.:-]+$/i;
 
